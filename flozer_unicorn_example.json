@@ -1,0 +1,4 @@
+{
+    "cookie_map": "lambda c: (not c and '--') or 'flip(%s)' % utils.int_to_ipv4(c)"
+}
+
