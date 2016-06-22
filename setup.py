@@ -27,7 +27,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name='flozer',
-    version='1.2',
+    version='1.3',
     author='Trey Morris',
     author_email='trey@treymorris.com',
     description='openflow parser',
