@@ -49,8 +49,11 @@ def parse_args():
 
 
 def parse_config(conf_file):
-    with open(os.path.expanduser(conf_file)) as f:
-        config = json.load(f)
+    try:
+        with open(os.path.expanduser(conf_file)) as f:
+            config = json.load(f)
+    except IOError:
+        return {}
 
     # cookie map is a function so the string needs to be converted
     if 'cookie_map' in config:
