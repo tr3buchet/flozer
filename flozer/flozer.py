@@ -106,7 +106,7 @@ def execute():
     disable_unicode = (args.disable_unicode or
                        conf.get('disable_unicode', False))
     json_output = args.json or conf.get('json', False)
-    protocol = args.protocol or conf.get('protocol')
+    protocol = args.protocol or conf.get('protocol', 'OpenFlow13')
 
     if args.show_config:
         print 'bridges: %s' % args.bridges
