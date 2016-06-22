@@ -94,7 +94,7 @@ def collect_flows(bridges, protocol):
     flows = []
     for bridge in bridges:
         args = [OVS_OFCTL, 'dump-flows', '-O', protocol, bridge]
-        flows.append(subprocess.check_output(args).split('\n'))
+        flows[len(flows):] = subprocess.check_output(args).split('\n')
     return flows
 
 
