@@ -141,7 +141,8 @@ class Action(Field):
                 ms = ms.replace(k, v)
 
         if self._table_map and 'goto_table' in ms:
-            ms = 'goto_table:' + self._table_map[int(ms.split(self.sep)[1])]
+            t = int(ms.split(self.sep)[1])
+            ms = 'goto_table:%s' % self._table_map.get(t, t)
 
         self._mapped_string = ms
         return self._mapped_string
@@ -171,7 +172,7 @@ class Flow(dict):
         self.cookie_map = cookie_map
         # table_map is a dictionary of maps from int table-id to a string
         # table_map applies to flow's table and any goto_table or resubmits
-        self.table_map = table_map
+        self.table_map = table_map or {}
         # match_map and action_map are dicts of str replacements for matches
         # and for actions, string substitutions are performed
         self.match_map = match_map or {}
@@ -259,14 +260,12 @@ class Flow(dict):
 
         if 'table' in fields:
             self.table = int(fields['table'])
-            if self.table_map:
-                fields['table'] = self.table_map[self.table]
-            else:
-                fields['table'] = self.table
+            fields['table'] = self.table_map.get(self.table, self.table)
 
         # NOTE(tr3buchet): integerize a few things
         if 'priority' in fields:
             fields['priority'] = int(fields['priority'])
+            self.priority = -fields['priority']
         if 'n_packets' in fields:
             fields['n_packets'] = int(fields['n_packets'])
         if 'n_bytes' in fields:

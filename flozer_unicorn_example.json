@@ -1,4 +1,8 @@
 {
-    "cookie_map": "lambda c: (not c and '--') or 'flip(%s)' % utils.int_to_ipv4(c)"
+    "cookie_map": "lambda c: (not c and '--') or 'flip(%s)' % utils.int_to_ipv4(c)",
+    "table_map": {"0": "BASE(0)",
+                  "50": "SOUTHBOUND_BILLING(50)",
+                  "100": "ROUTING(100)",
+                  "120": "NORTHBOUND_BILLING(120)"},
+    "sort": ["label", "table", "priority"]
 }
-
