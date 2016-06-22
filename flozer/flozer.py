@@ -120,20 +120,19 @@ def execute():
         flows = get_stdin()
     else:
         # default to OpenFlow13 if not specified in args or conf
-        flows = collect_flows(args.bridges,
-                              args.protocol or conf.get('protocol'))
+        flows = collect_flows(args.bridges, protocol)
+
     # parse flows
     kwargs = {'cookie_map': conf.get('cookie_map'),
               'match_map': conf.get('match_map'),
               'table_map': conf.get('table_map'),
               'action_map': conf.get('action_map'),
-              'disable_unicode': (args.disable_unicode or
-                                  conf.get('disable_unicode', False))}
+              'disable_unicode': disable_unicode}
     flows = [Flow(flow, **kwargs) for flow in flows
              if '_FLOW reply' not in flow]
 
     # output flows
-    if args.json or conf['json']:
+    if json_output:
         print json.dumps(flows)
     else:
         for flow in flows:
