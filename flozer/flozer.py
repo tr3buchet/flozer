@@ -18,12 +18,14 @@
 
 import argparse
 import json
+from operator import attrgetter
 import os
 from pprint import pprint
 import subprocess
 import sys
 
 from lib import Flow
+import utils
 
 
 OVS_OFCTL = '/usr/bin/ovs-ofctl'
@@ -39,13 +41,17 @@ def parse_args():
                         help='display the specified flozer args/config')
     parser.add_argument('--conf', metavar='config file',
                         default='~/.flozer.json',
-                        help='config file if not ~/.flozer')
+                        help='config file if not ~/.flozer.json')
+    parser.add_argument('--sort', nargs='+',
+                        help='one or more sort keys '
+                             '(ex: --sort table label priority). '
+                             'defaults to not sorting input')
     parser.add_argument('-O', '--protocol', metavar='OpenFlow protocol',
                         help='openflow protocol to use for collecting flows, '
                              'see the ovs-ofctl man page for more info. '
                              'flozer defaults to OpenFlow13')
-    parser.add_argument('bridges', nargs='*', action='store',
-                        help='bridge to dump flows on')
+    parser.add_argument('bridge', nargs='*', action='store',
+                        help='bridge(s) to dump flows on')
     return parser.parse_args()
 
 
@@ -60,7 +66,8 @@ def parse_config(conf_file):
     if 'cookie_map' in config:
         # get ready for some srs business
         f = compile(config['cookie_map'], conf_file, 'eval')
-        config['cookie_map'] = eval(f, {'__builtins__': {}})
+        config['cookie_map'] = eval(f, {'__builtins__': {},
+                                        'utils': utils})
 
     # integerize the tables
     if 'table_map' in config:
@@ -108,23 +115,24 @@ def execute():
                        conf.get('disable_unicode', False))
     json_output = args.json or conf.get('json', False)
     protocol = args.protocol or conf.get('protocol', 'OpenFlow13')
+    sort = args.sort or conf.get('sort')
 
     if args.show_config:
-        print 'bridges: %s' % args.bridges
+        print 'bridges: %s' % args.bridge
         print 'OpenFlow protocol used: %s' % protocol
         print 'json output: %s' % json_output
         print 'disable unicode: %s' % disable_unicode
+        print 'sort keys: %s' % sort
         print 'conf file: %s' % args.conf
         print 'conf file contents:'
         pprint(conf)
         return
 
     # collect raw flows
-    if not args.bridges:
+    if not args.bridge:
         flows = get_stdin()
     else:
-        # default to OpenFlow13 if not specified in args or conf
-        flows = collect_flows(args.bridges, protocol)
+        flows = collect_flows(args.bridge, protocol)
 
     # parse flows
     kwargs = {'cookie_map': conf.get('cookie_map'),
@@ -134,6 +142,8 @@ def execute():
               'disable_unicode': disable_unicode}
     flows = [Flow(flow, **kwargs) for flow in flows
              if flow and '_FLOW reply' not in flow]
+    if sort:
+        flows = sorted(flows, key=attrgetter(*sort))
 
     # output flows
     if json_output:

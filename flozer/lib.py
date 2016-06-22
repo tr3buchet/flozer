@@ -163,7 +163,7 @@ class Match(Field):
 class Flow(dict):
     def __init__(self, flow_string, cookie_map=None, table_map=None,
                  match_map=None, action_map=None, disable_unicode=False):
-        self._string = flow_string.strip()
+        self.string = flow_string.strip()
         self.disable_unicode = disable_unicode
 
         # maps for things found in flows
@@ -192,7 +192,7 @@ class Flow(dict):
             tokens.append(priority)
 
             # parse fields
-            self['fields'] = self._parse_fields(tokens)
+            self.update(self._parse_fields(tokens))
 
             # parse matches and actions
             self['matches'] = self._get_matches(match_string)
@@ -202,12 +202,29 @@ class Flow(dict):
             print 'error processing flow |%s|' % self.string
             raise
 
-    @property
-    def string(self):
-        return self._string
+    def __getattr__(self, attr):
+        """
+        defined for sorting multiples so operator.attrgetter
+        can be used across the board on attributes and items in the flow
 
-    def fget(self, field, default=None):
-        return self['fields'].get(field, default)
+        obviously raises error if non existent
+
+        __getattr__ is only called if __getattribute__ fails
+        for example flow.table will return the attribute table
+        (flow.table) and not the key table (flow['table']) and __getattr__
+        is not called
+
+        on the flip side, with flow.n_packets __getattribute__ fails causing
+        __getattr__ to be called which returns flow['n_packets']
+
+        __getattribute__ is always called, __getattr__ is the fallback.
+        this is the case even when using getattr(flow, 'table')
+        """
+        print 'getattr called'
+        if attr in self:
+            return self[attr]
+        raise AttributeError("'Flow' object has no attribute '%s'" % attr)
+
 
     def aget(self, field, default=None):
         return self['actions'].get(field, default)
@@ -342,15 +359,15 @@ class Flow(dict):
              'priority=%(priority)s n_packets=%(n_packets)s\n')
         if self.disable_unicode:
             s += (' -> matches | %(matches)s\n'
-                  ' -> actions | %(actions)s\n')
+                  ' -> actions | %(actions)s')
         else:
             s += (u' ⤷ matches │ %(matches)s\n'
                   u' ⤷ actions │ %(actions)s')
         values = {'label': self.label,
-                  'cookie': self.fget('cookie'),
-                  'table': self.fget('table'),
-                  'priority': self.fget('priority'),
-                  'n_packets': self.fget('n_packets'),
+                  'cookie': self.get('cookie'),
+                  'table': self.get('table'),
+                  'priority': self.get('priority'),
+                  'n_packets': self.get('n_packets'),
                   'matches': self['matches'],
                   'actions': self['actions']}
 
