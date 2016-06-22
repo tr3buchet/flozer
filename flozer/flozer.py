@@ -19,6 +19,7 @@
 import argparse
 import json
 import os
+from pprint import pprint
 import subprocess
 import sys
 
@@ -89,7 +90,7 @@ def get_stdin():
     return stdin_lines
 
 
-def collect_flows(bridges, protocol='OpenFlow13'):
+def collect_flows(bridges, protocol):
     flows = []
     for bridge in bridges:
         args = [OVS_OFCTL, 'dump-flows', '-O', protocol, bridge]
@@ -98,11 +99,11 @@ def collect_flows(bridges, protocol='OpenFlow13'):
 
 
 def execute():
-    from pprint import pprint
     args = parse_args()
     conf = parse_config(args.conf)
 
     # merge args and conf preferring args over conf values
+    # also set a few defaults
     disable_unicode = (args.disable_unicode or
                        conf.get('disable_unicode', False))
     json_output = args.json or conf.get('json', False)
@@ -132,7 +133,7 @@ def execute():
               'action_map': conf.get('action_map'),
               'disable_unicode': disable_unicode}
     flows = [Flow(flow, **kwargs) for flow in flows
-             if '_FLOW reply' not in flow]
+             if flow and '_FLOW reply' not in flow]
 
     # output flows
     if json_output:

@@ -247,7 +247,13 @@ class Flow(dict):
             else:
                 fields['table'] = self.table
 
-        fields['priority'] = int(fields['priority'])
+        # NOTE(tr3buchet): integerize a few things
+        if 'priority' in fields:
+            fields['priority'] = int(fields['priority'])
+        if 'n_packets' in fields:
+            fields['n_packets'] = int(fields['n_packets'])
+        if 'n_bytes' in fields:
+            fields['n_bytes'] = int(fields['n_bytes'])
 
         if self.cookie_map:
             self.label = self.cookie_map(int(fields['cookie'], 16))
@@ -339,7 +345,7 @@ class Flow(dict):
                   ' -> actions | %(actions)s\n')
         else:
             s += (u' ⤷ matches │ %(matches)s\n'
-                  u' ⤷ actions │ %(actions)s\n')
+                  u' ⤷ actions │ %(actions)s')
         values = {'label': self.label,
                   'cookie': self.fget('cookie'),
                   'table': self.fget('table'),
